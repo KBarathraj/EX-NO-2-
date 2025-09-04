@@ -35,9 +35,120 @@ STEP-5: Display the obtained cipher text.
 
 
 Program:
+```
+Program developed by BARATHRAJ K (212224230033)
+```
 
+```c
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#define SIZE 5
+char keyTable[SIZE][SIZE];
+void generateKeyTable(char key[]) {
+    int used[26] = {0}; 
+    int i, j, k = 0;
+    for (i = 0; key[i]; i++) {
+        char c = toupper(key[i]);
+        if (c == 'J') c = 'I';
+        if (c < 'A' || c > 'Z') continue; 
+        if (!used[c - 'A']) {
+            keyTable[k / SIZE][k % SIZE] = c;
+            used[c - 'A'] = 1;
+            k++;
+        }
+    }
+    for (i = 0; i < 26; i++) {
+        if (i + 'A' == 'J') continue;
+        if (!used[i]) {
+            keyTable[k / SIZE][k % SIZE] = i + 'A';
+            k++;
+        }
+    }
+}
 
-
+void findPos(char c, int *row, int *col) {
+    if (c == 'J') c = 'I';
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (keyTable[i][j] == c) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+void prepareText(char *text, char *output) {
+    int len = strlen(text), i, j = 0;
+    for (i = 0; i < len; i++) {
+        char c = toupper(text[i]);
+        if (c < 'A' || c > 'Z') continue;
+        if (c == 'J') c = 'I';
+        if (j > 0 && output[j - 1] == c) {
+            output[j++] = 'X';
+        }
+        output[j++] = c;
+    }
+    if (j % 2 != 0) output[j++] = 'X';
+    output[j] = '\0';
+}
+void encryptText(char *text, char *cipher) {
+    int len = strlen(text);
+    for (int i = 0; i < len; i += 2) {
+        int r1, c1, r2, c2;
+        findPos(text[i], &r1, &c1);
+        findPos(text[i+1], &r2, &c2);
+        if (r1 == r2) { 
+            cipher[i] = keyTable[r1][(c1 + 1) % SIZE];
+            cipher[i+1] = keyTable[r2][(c2 + 1) % SIZE];
+        } else if (c1 == c2) {
+            cipher[i] = keyTable[(r1 + 1) % SIZE][c1];
+            cipher[i+1] = keyTable[(r2 + 1) % SIZE][c2];
+        } else { // rectangle
+            cipher[i] = keyTable[r1][c2];
+            cipher[i+1] = keyTable[r2][c1];
+        }
+    }
+    cipher[len] = '\0';
+}
+void decryptText(char *cipher, char *plain) {
+    int len = strlen(cipher);
+    for (int i = 0; i < len; i += 2) {
+        int r1, c1, r2, c2;
+        findPos(cipher[i], &r1, &c1);
+        findPos(cipher[i+1], &r2, &c2);
+        if (r1 == r2) { 
+            plain[i] = keyTable[r1][(c1 + SIZE - 1) % SIZE];
+            plain[i+1] = keyTable[r2][(c2 + SIZE - 1) % SIZE];
+        } else if (c1 == c2) { 
+            plain[i] = keyTable[(r1 + SIZE - 1) % SIZE][c1];
+            plain[i+1] = keyTable[(r2 + SIZE - 1) % SIZE][c2];
+        } else { 
+            plain[i] = keyTable[r1][c2];
+            plain[i+1] = keyTable[r2][c1];
+        }
+    }
+    plain[len] = '\0';
+}
+int main() {
+    char key[100], text[100], prepared[200], cipher[200], decrypted[200];
+    printf("Enter key: ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0';
+    generateKeyTable(key);
+    printf("Enter plaintext: ");
+    fgets(text, sizeof(text), stdin);
+    text[strcspn(text, "\n")] = '\0';
+    prepareText(text, prepared);
+    encryptText(prepared, cipher);
+    printf("Encrypted: %s\n", cipher);
+    decryptText(cipher, decrypted);
+    printf("Decrypted: %s\n", decrypted);
+    return 0;
+}
+```
 
 
 Output:
+<img width="2241" height="1326" alt="image" src="https://github.com/user-attachments/assets/b5c8cdc0-ede9-4d87-8248-f5679be054dd" />
